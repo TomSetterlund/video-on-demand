@@ -3,26 +3,35 @@ service: video-on-demand
 custom:
   stage: ${opt:stage, 'dev'}
   config: file(./config/${self:custom.stage}.json)
+  # bucket: ${${self:custom.stage}.prestorage}
 
 provider:
   name: aws
   runtime: dotnetcore2.1
   stage: ${self:custom.stage}
   region: ${${self:custom.config}:AWS_REGION}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:Putobject
+        - s3:PutObjectAcl
+      Resource: '*'
 
 package:
+  artifact: bin/release/netcoreapp2.1/hello.zip
   individually: true
   exclude:
     - .git/**
     - ./config/**
 
 functions:
-  hello:
-    handler: CsharpHandlers::AwsDotnetCsharp.Handler::Hello
+  save:
+    handler: CsharpHandlers::Handlers.Save::Run
     events: 
       - http:
-          path: /test/api/hello
+          path: /api/save
           method: post
           cors: true
-    package:
-      artifact: bin/release/netcoreapp2.1/hello.zip
+  process:
+    handler: CsharpHandlers::Handlers.Process::Run
+  

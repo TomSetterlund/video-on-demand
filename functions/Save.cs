@@ -4,11 +4,11 @@ using Newtonsoft.Json;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
-namespace AwsDotnetCsharp
+namespace Handlers
 {
-    public class Handler
+    public class Save
     {
-        public APIGatewayProxyResponse Hello(APIGatewayProxyRequest request)
+        public APIGatewayProxyResponse Run(APIGatewayProxyRequest request)
         {
             var body = JsonConvert.DeserializeObject<Request>(request.Body);
             var Response = new Response("Helllooooooo nuurse!", body);
