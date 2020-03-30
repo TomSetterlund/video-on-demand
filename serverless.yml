@@ -2,7 +2,7 @@ service: video-on-demand
 
 custom:
   stage: ${opt:stage, 'dev'}
-  config: file(./config/${self:custom.stage}.json)
+  config: file(../config/${self:custom.stage}.json)
 
 provider:
   name: aws
