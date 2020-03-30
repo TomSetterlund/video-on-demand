@@ -1,6 +1,11 @@
+using Amazon;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
@@ -8,42 +13,62 @@ namespace Handlers
 {
     public class Save
     {
-        public APIGatewayProxyResponse Run(APIGatewayProxyRequest request)
+        private readonly string _bucketName = Environment.GetEnvironmentVariable("S3_PREPROCESSED_NAME");
+        private readonly RegionEndpoint _bucketRegion;
+        private readonly IAmazonS3 _s3Client;
+        public Save()
         {
-            var body = JsonConvert.DeserializeObject<Request>(request.Body);
-            var Response = new Response("Helllooooooo nuurse!", body);
-            return new APIGatewayProxyResponse { StatusCode = 200, Body = JsonConvert.SerializeObject(Response) };
+            _bucketRegion = RegionEndpoint.USWest2;
+            _s3Client = new AmazonS3Client(_bucketRegion);
         }
-    }
 
-    public class Response
-    {
-        [JsonProperty("message")]
-        public string Message { get; set; }
-        [JsonProperty("request")]
-        public Request Request { get; set; }
-
-        public Response(string message, Request request)
+        public async Task<APIGatewayProxyResponse> Run(APIGatewayProxyRequest request)
         {
-            Message = message;
-            Request = request;
+            try
+            {
+                var body = JsonConvert.DeserializeObject<Request>(request.Body);
+
+                var putRequest = new PutObjectRequest 
+                {
+                    BucketName = _bucketName,
+                    Key = body.ChallengeName,
+                    ContentBody = body.EncodedImg
+                };
+                await _s3Client.PutObjectAsync(putRequest);
+                return new APIGatewayProxyResponse { StatusCode = 200, Body = "Success!" };
+            }
+            catch (AmazonS3Exception e)
+            {
+                return new APIGatewayProxyResponse
+                {
+                    StatusCode = 500,
+                    Body = $"Error encountered on server. Message: '{e.Message}' when writing an object"
+                };
+            }
+            catch (Exception e)
+            {
+                return new APIGatewayProxyResponse
+                {
+                    StatusCode = 500,
+                    Body = $"Error encountered on server. Message: '{e.Message}' when writing an object"
+                };
+            }
         }
     }
 
     public class Request
     {
-        [JsonProperty("key1")]
-        public string Key1 { get; set; }
-        [JsonProperty("key2")]
-        public string Key2 { get; set; }
-        [JsonProperty("key3")]
-        public string Key3 { get; set; }
+        [JsonProperty("user_id")]
+        public string UserId { get; set; }
+        [JsonProperty("challenge_name")]
+        public string ChallengeName { get; set; }
+        [JsonProperty("encoded_image")]
+        public string EncodedImg { get; set; }
 
-        public Request(string key1, string key2, string key3)
+        public Request(string userId, string encodedImage)
         {
-            Key1 = key1;
-            Key2 = key2;
-            Key3 = key3;
+            UserId = userId;
+            EncodedImg = encodedImage;
         }
     }
 }
