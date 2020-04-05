@@ -29,11 +29,11 @@ package:
     - ./config/**
 
 functions:
-  save:
-    handler: CsharpHandlers::Handlers.Save::Run
+  getPresignedPostData:
+    handler: CsharpHandlers::Handlers.PresignedPostData::Get
     events: 
       - http:
-          path: /api/save
+          path: presigned-post-url
           method: post
           cors: true
   process:
