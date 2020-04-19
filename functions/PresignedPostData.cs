@@ -34,6 +34,7 @@ namespace Handlers
                 var presignedUrlRequest = new GetPreSignedUrlRequest {
                     BucketName = _bucketName,
                     Key = body.ChallengeName,
+                    ContentType = "image/*",
                     Expires = DateTime.Now.AddMinutes(3)
                 };
 
